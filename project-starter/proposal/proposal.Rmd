@@ -1,16 +1,79 @@
 ---
 title: "Project proposal"
-author: "Team name"
+author: "Daytonna Anderson"
 output: html_document
 ---
 
 ```{r load-packages, message = FALSE}
 library(tidyverse)
 library(broom)
+library(DATAstudio)
 ```
+
+The data used in my analysis comes from the `wildfire` dataset included in the `DATAstudio` package in R. This dataset compiles records of wildfire events in Portugal, showing the amount of area burned (in hectares) for wildfires in Portugal, and then then accompanied by Canadian Forest Fire Weather Index System Indices (CFFWIS). This data was originally collected from the monitoring systems and environmental observation networks. The goal for this project is to investigate how environmental factors influence wildfire behavior, specifically focusing on wildfire size. 
+
+Each row in this dataset represents an individual wildfire event. The dataset includes variables such as Burnt_Area, as well as multiple indices including Fire Weather Index (FWI), Buildup Index (BUI), Initial Spread Index (ISI), Fine Fuel Moisture Code (FFMC), Duff Moisture Code (DMC), Drought Code (DC), and day, month, year. 
+
 
 ## 1. Data
 
+This data is under a package in R Studio:
+
+```{r glimpse-data, eval = T}
+data("wildfire")
+glimpse(wildfire)
+```
+
 ## 2. Exploratory Visualization
 
+Response Variable: `Burnt_Area`
+Predictors: `FWI, ISI, BUI, FFMC
+
+Comparison Groups: High vs. low fire risk days (FWI)
+High vs. low fuel availability (BUI)
+Seasonal comparisons using `month`
+
+```{r summary-data, eval = T}
+wildfire %>%
+  summarize(
+    mean_area = mean(Burnt_Area, na.rm = TRUE),
+    median_area = median(Burnt_Area, na.rm = TRUE),
+    sd_area = sd(Burnt_Area, na.rm = TRUE)
+  )
+```
+
+```{r burnt-vs-fwi, eval = T}
+ggplot(wildfire, aes(x = FWI, y = Burnt_Area)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylim(NA, 50000) +
+  labs(title = "Burnt Area vs FWI")
+```
+
+
 ## 3. Possible question and method
+
+From this data, I seek to answer the research question: How do environmental conditions influence the total area burned by wildfires?
+
+Hypothesized results:
+
+Null hypothesis: Burnt area has no significant relationship with FWI, ISI, BUI, and FFMC
+
+Alternative: Burnt area has a significant relationship with FWI, ISI, BUI, and FFMC
+
+
+Methods: 
+
+- Confidence Intervals for mean burnt area
+```{r mean-CI, eval = T}
+
+t.test(wildfire$Burnt_Area)
+```
+
+- Two sample t-tests to compare mean burnt area between predictors.
+
+- Correlation Analysis to identify which predictors are most related to wildfire size.
+
+- Linear Regression/Multiple Linear Regression.
+
+
