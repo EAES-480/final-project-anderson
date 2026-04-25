@@ -4,32 +4,27 @@ author: "Daytonna Anderson"
 output: html_document
 ---
 
-> GM GRADE: 15/20 - good job! Overall a clean and concise proposal, just with a few errors, some missing detail, and lacking polish on figure.
-
-Description: 5.5/8
-Content: 8/10
-Quality: 1.5/2
-
-
 ```{r load-packages, message = FALSE}
 library(tidyverse)
+library(janitor)
 library(broom)
 library(DATAstudio)
 ```
 
-The data used in my analysis comes from the `wildfire` dataset included in the `DATAstudio` package in R. This dataset compiles records of wildfire events in Portugal, showing the amount of area burned (in hectares) for wildfires in Portugal, and then then accompanied by Canadian Forest Fire Weather Index System Indices (CFFWIS). This data was originally collected from the monitoring systems and environmental observation networks. The goal for this project is to investigate how environmental factors influence wildfire behavior, specifically focusing on wildfire size. 
+The data used in this analysis comes from the [`wildfire` dataset](https://r-packages.io/datasets/wildfire) included in the `DATAstudio` package in R. This dataset compiles records of wildfire events in Portugal, showing the amount of area burned (in hectares) for wildfires in Portugal, and then accompanied by Canadian Forest Fire Weather Index System Indices (CFFWIS). This data was originally collected from the monitoring systems and environmental observation networks. The goal for this project is to investigate how environmental factors influence wildfire behavior, specifically focusing on burned area. 
 
-Each row in this dataset represents an individual wildfire event. The dataset includes variables such as Burnt_Area, as well as multiple indices including Fire Weather Index (FWI), Buildup Index (BUI), Initial Spread Index (ISI), Fine Fuel Moisture Code (FFMC), Duff Moisture Code (DMC), Drought Code (DC), and day, month, year. 
+Each row in this dataset represents a day. The dataset includes a primary response variable, `burnt_area`,which represents the total area burned per day. Since this data is taken on a national level, the analysis focuses on large-scale environmental influences on wildfire activity, rather than individual fire events.  
 
-> GM: Great introduction providing where the data come from, what they describe, and a basic variable definition. 
+The dataset also includes predictor variables that influence and describe fire weather and fuel conditions:
 
-> GM: -1 I am deducting a point from description because the data were not in the data folder. After you read the data in, please write it out to your data folder (`project-starter/data/..`) as a .csv using `write_csv()`, then populate the data dictionary in the README.md in the same data folder including the variable name, the full name, a description and/or units as applicable. 
+Fire Weather Index (`fwi`), 
+Buildup Index (`bui`), 
+Initial Spread Index (`isi`), 
+Fine Fuel Moisture Code (`ffmc`), 
+Duff Moisture Code (`dmc`), 
+Drought Code (`dc`), 
+and `day`, `month`, `year`. 
 
-> GM: -1, I am deducting a point from the "Description" category because each row is not a single fire event. Each row is total country-wide burned area for single day from `r min(wildfire$year)` to `r max(wildfire$year)`. Your insights will be at the national scale as far as I can tell. 
-
-> GM: -0.5 I'm also deducting half a point from description because the names are still mixed upper case and `janitor::clean_names()` should be removed to make them lower_snake_case.
-
-2) You also do not include area units for Burnt_Area, but whatever they are, each row is unit_area per day. 
 
 ## 1. Data
 
@@ -37,75 +32,98 @@ This data is under a package in R Studio:
 
 ```{r glimpse-data, eval = T}
 data("wildfire")
+
+wildfire <- wildfire %>%
+  clean_names()
+
 glimpse(wildfire)
-wildfire %>% ggplot(aes(x = Burnt_Area)) + geom_histogram() + scale_y_log10()
+```
+
+```{r csv-data}
+
+write_csv(wildfire, "data/wildfire.csv")
+
 ```
 
 ## 2. Exploratory Visualization
 
-> GM: -1 I'm deducting a point from content because there are not units reported for burnt area. 
+Response Variable: `burnt_area`
+Predictors: `fwi`, `isi`, `bui`, `ffmc`
 
-> GM: You may also want to report how many days out of the full time series had zero vs. great-than-zero Burnt_Area.
-
-Response Variable: `Burnt_Area`
-Predictors: `FWI, ISI, BUI, FFMC
-
-Comparison Groups: High vs. low fire risk days (FWI)
-High vs. low fuel availability (BUI)
+Comparison Groups: High vs. low fire risk days (`fwi`)
+High vs. low fuel availability (`bui`)
 Seasonal comparisons using `month`
 
 ```{r summary-data, eval = T}
 wildfire %>%
   summarize(
-    mean_area = mean(Burnt_Area, na.rm = TRUE),
-    median_area = median(Burnt_Area, na.rm = TRUE),
-    sd_area = sd(Burnt_Area, na.rm = TRUE)
+    total_days = n(),
+    zero_burn_days = sum(burnt_area == 0, na.rm = TRUE),
+   nonzero_burn_days = sum(burnt_area > 0, na.rm = TRUE)
   )
 ```
 
-```{r burnt-vs-fwi, eval = T}
-ggplot(wildfire, aes(x = FWI, y = log10(Burnt_Area))) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  # ylim(NA, 50000) +
-  labs(title = "Burnt Area vs FWI")
+```{r burnt-distribution, eval = T}
+ggplot(wildfire, aes(x = burnt_area)) +
+  geom_histogram(bins = 25) +
+  scale_y_log10() +
+  labs(
+    title = "Daily Burned Area",
+    x = "Burned Area (hectares per day)",
+    y = "Count (log)"
+  )
+  
 ```
 
-> GM: Your visualization is nice, though I noticed that the fit almost becomes linear when the Burnt_Area is log10 transformed first. Remember when you fit models later, you'll be able to evalute the fit with residual plots. These residual plots may give you reason to log10 transform the `Burnt_Area` for all analyses.
+The distribution is extremely right-skewed, with a high number of zero values and a small number of extreme fire days. The log transformation helps to clarify with relationship in the data and see the variability.
 
-> GM: -0.5 deducting one half-point from quality due to unpolished figure. You can update axis labels, and add a theme, and use hexplot or alpha on points to avoid excessive overlap of points.
+```{r burnt-vs-fwi, eval = T}
+ggplot(wildfire, aes(x = fwi, y = log10(burnt_area +1))) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Fire Weather Index (FWI)",
+    y = "Burned Area (log)"
+  )
+
+```
+
+This transformation shows a more linear relationship, which supports the use in regression modeling. We can see a significant relationship between the two variables.
 
 ## 3. Possible question and method
 
-> GM: When you conduct your final analyses, remember also to screen your data for outliers, impossible numbers (negative Burnt_Area), and think about the analysis consequences of most days being Burnt_Area == 0. You may want to select only days when fires are burning to avoid strange zero-inflated statistical behavior. 
+From this data, I seek to answer the research question: How do environmental conditions influence the daily total burned area at the national scale?
 
+Supporting Questions:
 
-From this data, I seek to answer the research question: How do environmental conditions influence the total area burned by wildfires?
-
-> GM: Good, but be careful. Rethink this given you now know each row is a daily burned area at a national scale. THe language "total burned area" is currently too vauge. I'd also suggest re-stating these as separate questions explicitly for 2-3 of the predictor variables that given your early exploration and intuition could be good predictors. 
+What is the relationship between FWI and daily burned area?
+How does ISI affect burned area on active fire days?
+Does BUI significantly predict the extent of a burned area?
 
 Hypothesized results:
 
 Null hypothesis: Burnt area has no significant relationship with FWI, ISI, BUI, and FFMC
 
-Alternative: Burnt area has a significant relationship with FWI, ISI, BUI, and FFMC
+Alternative: Burnt area has a significant relationship with at least one of FWI, ISI, BUI, and FFMC
 
 
 Methods: 
 
 - Confidence Intervals for mean burnt area
-
 ```{r mean-CI, eval = T}
-t.test(wildfire$Burnt_Area)
+
+t.test(wildfire$burnt_area)
+
 ```
+This estimates the mean daily burned area, and reveals if it differs significantly from zero.
 
-- Two sample t-tests to compare mean burnt area between predictors.
 
-- Correlation Analysis to identify which predictors are most related to wildfire size.
+- Linear Regression/Multiple Linear Regression with model diagnostics
+```{r lm-model, eval = T}
+model <- lm(log10(burnt_area +1) ~ fwi + isi + bui + ffmc, data = wildfire)
 
-- Linear Regression/Multiple Linear Regression.
-
-> GM: nice job using t.test for confidence intervals, essentially testing whether the Burnt_Area is sig. diff. from zero. This is an unusual approach, but works. 
-
-> GM: -1 deducting one point from content because I wanted to hear how you'd use lm(). It's a great option for building a multi-variate model that simultaneously explores the significance of relationships between Burnt_Area and all the variables. 
+glance(model)
+```
+This model evaluates the effects of multiple environmental predictors on the burnt area.
 
