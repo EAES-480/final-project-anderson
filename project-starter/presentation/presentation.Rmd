@@ -1,7 +1,7 @@
 ---
-title: "Presentation title"
-subtitle: "Presentation subtitle (if any)"
-author: "Team name <br> Names of team members"
+title: "Wildfires"
+subtitle: "Trends in Portugal"
+author: "Daytonna Anderson"
 institute: "University of Illinois at Chicago"
 date: "`r Sys.Date()`"
 output:
@@ -16,163 +16,298 @@ output:
 ---
 
 ```{r load-packages, include = FALSE}
-# Add any additional packages you need to this chunk
 library(tidyverse)
 library(tidymodels)
 library(palmerpenguins)
 library(knitr)
+library(xaringan)
 library(xaringanthemer)
+library(janitor)
+library(broom)
+library(DATAstudio)
 ```
 
 ```{r setup, include=FALSE}
-# For better figure resolution
 knitr::opts_chunk$set(fig.retina = 3, dpi = 300, fig.width = 6, fig.asp = 0.618, out.width = "80%")
 ```
 
+
 ```{r load-data, include=FALSE}
-# Load your data here
+wildfire <- read_csv("data/wildfire.csv")
 ```
 
-```{r}
+```{r load-picture, include=FALSE}
 style_xaringan(
-  title_slide_background_image = "img/confetti.jpg"
+  title_slide_background_image = "img/portugal-wildfire.jpg"
 )
 ```
 
 
 class: center, middle
 
-## A statement of the overall goal / research question
+# Overall Goal/ Research Question
 
----
 
-class: inverse, center, middle
-
-# Section title
-
----
-
-# Hello World
-
-- Click the `Knit` button to compile your presentation
-
-- Make sure to commit and push all resulting files to your GitHub repo
+How do environmental conditions influence the daily total burned area at the national scale?
 
 ---
 
 class: inverse, middle, center
 
-# Using xaringan
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Data
 
 ---
 
-# xaringan
+# Variables
 
-- The presentation is created using the `xaringan` package
-
-- Use `---` to separate slides and `--` for incremental builds
-
---
-
-- Like this
+| Column | Meaning |
+|---|---|
+| Burnt Area (`burnt_area`) | Daily burnt area in hectares |
+| Fire Weather Index (`fwi`) | Numeric rating of fire intensity |
+| Buildup Index (`bui`) | Numeric rating of fuel available for combustion |
+| Initial Spread Index (`isi`) | Numeric rating of expected rate of fire spread |
+| Fine Fuel Moisture Code (`ffmc`) | Numeric rating of moisture content of litter and other fuels |
+| Daily Severity Rating (`dsr`) | Numeric rating of difficulty to control fires |
+| Duff Moisture Code (`dmc`) | Numeric rating of average moisture content of lose compact organic layers |
+| Drought Code (`dc`) | Rating of average moisture content of compact organic layers |
+|`day`, `month`, `year` | Time stamp for each point |
 
 ---
 
-# Layouts
+## Variables Used
 
-You can use plain text
+- Response Variable: `burnt_area`
+- Predictor Variable(s): `fwi`, `isi`, `bui`, `dc`
 
-- or bullet points
+
+## Comparison Groups
+
+- High vs. low fire risk days (`fwi`)
+- High vs. low fuel availability (`bui`)
+- Seasonal comparisons (`month`)
+
+
+## Hypothesis
+
+
+- $H_0$: Burnt area has no significant relationship with FWI, ISI, BUI, and DC
+
+- $H_A$: Burnt area has a significant relationship with at least one of FWI, ISI, BUI, and DC
+
+---
+
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Initial Data Exploration
+
+---
+
+# Total Burn Days
 
 .pull-left[
-or text in two columns $^*$
+```{r summary-data, eval = F}
+wildfire %>%
+  summarize(
+    total_days = n(),
+    zero_burn_days = sum(burnt_area == 0, 
+                         na.rm = TRUE),
+   nonzero_burn_days = sum(burnt_area > 0, 
+                           na.rm = TRUE)
+  )
+```
 ]
+
 .pull-right[
-- like
-- this
+```{r burnt-distribution, echo = F, eval = T, out.width="100%"}
+#| warning: false
+ggplot(wildfire, aes(x = burnt_area)) +
+  geom_histogram(bins = 25) +
+  scale_y_log10() +
+  labs(
+    title = "Daily Burned Area",
+    x = "Burned Area (hectares per day)",
+    y = "Count (log)"
+  )
+```
+
+```{r log-data, echo = F, eval = T}
+wildfire <- wildfire %>%
+  mutate(log_burn = log10(burnt_area +1))
+```
 ]
-
-.footnote[
-[*] And add footnotes
-]
-
 ---
 
-# Code
-
-```{r boring-regression}
-# a boring regression
-model <- lm(dist ~ speed, data = cars)
-tidy(model)
-glance(model)
-```
-
----
-
-# Plots
-
-```{r recode-species, echo = FALSE}
-# In this chunk I'm doing a bunch of analysis that I don't want to present 
-# in my slides. But I need the resulting data frame for a plot I want to present.
-iris_modified <- iris %>%
-  mutate(Species = fct_other(Species, keep = "setosa"))
-```
-
-```{r plot-iris, echo = FALSE}
-# Code hidden with echo = FALSE
-# Uses modified iris dataset from previous chunk
-# Play around with height and width until you're happy with the look
-ggplot(data = iris_modified, mapping = aes(x = Sepal.Width, y = Sepal.Length, color = Species)) +
-  geom_point() + 
-  theme_minimal() # theme options: https://ggplot2.tidyverse.org/reference/ggtheme.html
-```
-
----
-
-## Plot and text
+class: center, middle
 
 .pull-left[
-- Some text
-- goes here
+```{r burnt-vs-fwi, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = fwi, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Fire Weather Index (FWI)",
+    y = "Burned Area (log)"
+  )
+```
+
+```{r burnt-vs-isi, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = isi, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Initial Spread Index (ISI)",
+    y = "Burned Area (log)"
+  )
+```
 ]
+
 .pull-right[
-```{r warning=FALSE, out.width="100%", fig.width=4, echo=FALSE}
-# see how I changed out.width and fig.width from defaults
-# to make the figure bigger
-ggplot(penguins, aes(x = bill_length_mm, y = species, color = species)) +
+```{r burnt-vs-bui, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = bui, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Buildup Index (BUI)",
+    y = "Burned Area (log)"
+  )
+```
+
+```{r burnt-vs-dc, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = dc, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Drought Code (DC)",
+    y = "Burned Area (log)"
+  )
+```
+]
+
+---
+
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Exploratory Variable Testing
+
+---
+
+class: center, middle
+
+```{r seasonal-fires, echo = F, eval = T}
+ggplot(wildfire, aes(x = factor(month), y = log_burn)) +
   geom_boxplot() +
-  theme_minimal()
-```
-]
-
----
-
-# Tables
-
-If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,
-
-```{r iris-table, echo = FALSE}
-kable(head(iris), format = "html")
+  labs(
+    title = "Seasonal Variation in Burned Area",
+    x = "Month",
+    y = "Burned Area (log)"
+  )
 ```
 
 ---
 
-# Images
+class: center, middle
 
-```{r castle, echo = FALSE, out.width = "60%", fig.align = "center", fig.cap = "Image credit: Photo by Enjoy Illinois."}
-include_graphics("img/chicago-fall.jpeg")
+```{r fwi-high-low, echo = F, eval = T}
+wildfire <- wildfire %>%
+  mutate(
+    fwi_group = if_else(fwi > median(fwi, na.rm = TRUE),
+                        "High FWI", "Low FWI")
+  )
 ```
 
+```{r fwi-high-low-plot, echo = F, eval = T}
+ggplot(wildfire, aes(x = fwi_group, y = log_burn)) +
+  geom_boxplot() +
+  labs(
+    title = "Burned Area by Fire Weather Risk Level",
+    x = "FWI Group",
+    y = "Log Burned Area"
+  )
+```
 
 ---
 
-# Feeling adventurous?
+class: center, middle
 
-- Want to find out more about `xaringan`? See https://slides.yihui.name/xaringan/#1.
+```{r bui-high-low, echo = F, eval = T}
+wildfire <- wildfire %>%
+  mutate(
+    bui_group = if_else(bui > median(bui, na.rm = TRUE),
+                        "High BUI", "Low BUI")
+  )
+```
 
-- You are welcomed to use the default styling of the slides. In fact, that's what I expect majority of you will do. You will differentiate yourself with the content of your presentation.
+```{r bui-high-low-plot, echo = F, eval = T}
+ggplot(wildfire, aes(x = bui_group, y = log_burn)) +
+  geom_boxplot() +
+  labs(
+    title = "Burned Area by Fuel Availability",
+    x = "BUI Group",
+    y = "Log Burned Area"
+  )
+```
 
-- But some of you might want to play around with slide styling. The 
-`xaringanthemer` provides some solutions for this that: https://pkg.garrickadenbuie.com/xaringanthemer.
+---
 
-- And if you want more bells and whistles, there is also `xaringanExtra`: https://pkg.garrickadenbuie.com/xaringanExtra.
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Statisical Testing
+
+---
+
+```{r mean-CI, echo = F, eval = T}
+t.test(wildfire$burnt_area)
+```
+
+```{r lm-model, echo = F, eval = T}
+model <- lm(log10(burnt_area +1) ~ fwi + isi + bui + dc, data = wildfire)
+
+summary(model)
+```
+
+---
+
+class: center, middle
+
+```{r plotted-residuals, echo = F, eval = T}
+par(mfrow = c(2,2))
+plot(model)
+```
+
+---
+
+class: center, middle
+
+```{r residul-model, echo = F, eval = T}
+wildfire <- wildfire %>%
+  mutate(residuals = resid(model),
+         fitted = fitted(model))
+```
+
+```{r plotting-own-residual, echo = F, eval = T}
+ggplot(wildfire, aes(x = fitted, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuals vs Fitted Values")
+```
+
+
+
+
+

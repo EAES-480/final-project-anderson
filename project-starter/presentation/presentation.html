@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Wildfires</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Daytonna Anderson" />
+    <meta name="date" content="2026-05-06" />
+    <script src="libs/header-attrs-2.31/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Wildfires
+]
+.subtitle[
+## Trends in Portugal
+]
+.author[
+### Daytonna Anderson
+]
+.institute[
+### University of Illinois at Chicago
+]
+.date[
+### 2026-05-06
+]
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+class: center, middle
+
+# Overall Goal/ Research Question
+
+
+How do environmental conditions influence the daily total burned area at the national scale?
+
+---
+
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Data
+
+---
+
+# Variables
+
+| Column | Meaning |
+|---|---|
+| Burnt Area (`burnt_area`) | Daily burnt area in hectares |
+| Fire Weather Index (`fwi`) | Numeric rating of fire intensity |
+| Buildup Index (`bui`) | Numeric rating of fuel available for combustion |
+| Initial Spread Index (`isi`) | Numeric rating of expected rate of fire spread |
+| Fine Fuel Moisture Code (`ffmc`) | Numeric rating of moisture content of litter and other fuels |
+| Daily Severity Rating (`dsr`) | Numeric rating of difficulty to control fires |
+| Duff Moisture Code (`dmc`) | Numeric rating of average moisture content of lose compact organic layers |
+| Drought Code (`dc`) | Rating of average moisture content of compact organic layers |
+|`day`, `month`, `year` | Time stamp for each point |
+
+---
+
+## Variables Used
+
+- Response Variable: `burnt_area`
+- Predictor Variable(s): `fwi`, `isi`, `bui`, `dc`
+
+
+## Comparison Groups
+
+- High vs. low fire risk days (`fwi`)
+- High vs. low fuel availability (`bui`)
+- Seasonal comparisons (`month`)
+
+
+## Hypothesis
+
+
+- `\(H_0\)`: Burnt area has no significant relationship with FWI, ISI, BUI, and DC
+
+- `\(H_A\)`: Burnt area has a significant relationship with at least one of FWI, ISI, BUI, and DC
+
+---
+
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Initial Data Exploration
+
+---
+
+# Total Burn Days
+
+.pull-left[
+
+``` r
+wildfire %&gt;%
+  summarize(
+    total_days = n(),
+    zero_burn_days = sum(burnt_area == 0, 
+                         na.rm = TRUE),
+   nonzero_burn_days = sum(burnt_area &gt; 0, 
+                           na.rm = TRUE)
+  )
+```
+]
+
+.pull-right[
+&lt;img src="presentation_files/figure-html/burnt-distribution-1.png" alt="" width="100%" /&gt;
+
+
+]
+---
+
+class: center, middle
+
+.pull-left[
+&lt;img src="presentation_files/figure-html/burnt-vs-fwi-1.png" alt="" width="80%" /&gt;
+
+&lt;img src="presentation_files/figure-html/burnt-vs-isi-1.png" alt="" width="80%" /&gt;
+]
+
+.pull-right[
+&lt;img src="presentation_files/figure-html/burnt-vs-bui-1.png" alt="" width="80%" /&gt;
+
+&lt;img src="presentation_files/figure-html/burnt-vs-dc-1.png" alt="" width="80%" /&gt;
+]
+
+---
+
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Exploratory Variable Testing
+
+---
+
+class: center, middle
+
+&lt;img src="presentation_files/figure-html/seasonal-fires-1.png" alt="" width="80%" /&gt;
+
+---
+
+class: center, middle
+
+
+
+&lt;img src="presentation_files/figure-html/fwi-high-low-plot-1.png" alt="" width="80%" /&gt;
+
+---
+
+class: center, middle
+
+
+
+&lt;img src="presentation_files/figure-html/bui-high-low-plot-1.png" alt="" width="80%" /&gt;
+
+---
+
+class: inverse, middle, center
+
+background-image: url("img/portugal-wildfire-2.jpg")
+background-size: cover
+
+# Statisical Testing
+
+---
+
+
+```
+## 
+## 	One Sample t-test
+## 
+## data:  wildfire$burnt_area
+## t = 14.205, df = 14608, p-value &lt; 2.2e-16
+## alternative hypothesis: true mean is not equal to 0
+## 95 percent confidence interval:
+##  280.0369 369.6919
+## sample estimates:
+## mean of x 
+##  324.8644
+```
+
+
+```
+## 
+## Call:
+## lm(formula = log10(burnt_area + 1) ~ fwi + isi + bui + dc, data = wildfire)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -2.86459 -0.33727 -0.08637  0.32991  2.53709 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) -1.140e-02  1.076e-02  -1.059    0.289    
+## fwi          8.967e-03  2.272e-03   3.947 7.96e-05 ***
+## isi          1.319e-01  5.392e-03  24.459  &lt; 2e-16 ***
+## bui          4.293e-03  2.081e-04  20.624  &lt; 2e-16 ***
+## dc           4.074e-04  4.856e-05   8.390  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.5722 on 14604 degrees of freedom
+## Multiple R-squared:  0.7236,	Adjusted R-squared:  0.7235 
+## F-statistic:  9558 on 4 and 14604 DF,  p-value: &lt; 2.2e-16
+```
+
+---
+
+class: center, middle
+
+&lt;img src="presentation_files/figure-html/plotted-residuals-1.png" alt="" width="80%" /&gt;
+
+---
+
+class: center, middle
+
+
+
+&lt;img src="presentation_files/figure-html/plotting-own-residual-1.png" alt="" width="80%" /&gt;
+
+
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+  "ratio": "16:9",
+  "highlightStyle": "github",
+  "highlightLines": true,
+  "countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
