@@ -45,7 +45,7 @@ I performed a t-test and summarized a model of all variables to extract the p-va
 
 Wildfire activity varied across environmental conditions. We see variability through the months, with a peak wildfire count in August and the months leading up to and following it. This suggests that summertime in Portugal harbors the influential conditions for wildfires. Comparisons between grouped variables further support this pattern. Days classified as high fire risk based on `fwi` had significantly higher rates of area burned. We can see a similar trend with `bui`, with high rates increasing the area burned; the area burned is influenced by the amount of fuel available. 
 
-The statistical testing done reinforces these trends. It can be seen that the mean is significantly greater than 0, which confirms that wildfire activity is non-random and is supported by the predictor variables. The 95% CI does NOT include 0, meaning the wildfire activity is statistically meaningful and has a strong relationship with the predictor variables chosen. The combined model explores the overall effects of each environmental response variable. The R-squared value of 0.72 explains that 72% of the wildfire variability is explained by environmental conditions. This, however, does mean that the model leaves 28% unexplained. The 2.2e-16 p-value means we reject our null hypothesis, which explains that burnt area has a significant relationship with at least one of fwi, isi, bui, and dc.
+The 95% CI does NOT include 0, meaning the wildfire activity is statistically meaningful and has a strong relationship with the predictor variables chosen. The combined model explores the overall effects of each environmental response variable. The R-squared value of 0.72 explains that 72% of the wildfire variability is explained by environmental conditions. This, however, does mean that the model leaves 28% unexplained. The 2.2e-16 p-value means we reject our null hypothesis, which explains that burnt area has a significant relationship with at least one of fwi, isi, bui, and dc.
 
 
 
@@ -64,8 +64,6 @@ My own residual plot agrees with the other modeled residual plot, proving accura
 These results indicate that environmental conditions play a significant role in determining wildfire severity at the national scale in Portugal. The inclusion of `fwi` and `bui` shows a particular influence, showcasing the importance of atmospheric and ecological factors in wildfire analysis. 
 
 One limitation within this dataset was the lack of temperature values to accompany the scaled values given by each variable. Although the dataset was still interpretable with the available scaled variables, the lack of actual temperature (and wind speed)  that goes with each of these data points is not included. I think the inclusion of temperature and perhaps wind speed would have made the data more digestible and improved the accuracy of the modeling. 
-
-I believe the high number of zero-burn days also provided a challenge. While the log transformation mitigated skewness and allowed for regression modeling, it didn’t fully address the zero issue. This makes the model better at explaining the magnitude of fires rather than predicting whether a fire will occur. 
 
 
 # Conclusion
