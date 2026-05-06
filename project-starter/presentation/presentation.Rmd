@@ -36,6 +36,13 @@ knitr::opts_chunk$set(fig.retina = 3, dpi = 300, fig.width = 6, fig.asp = 0.618,
 wildfire <- read_csv("data/wildfire.csv")
 ```
 
+```{r glimpse-data, eval = T, include = FALSE}
+data("wildfire")
+
+wildfire <- wildfire %>%
+  clean_names()
+```
+
 ```{r load-picture, include=FALSE}
 style_xaringan(
   title_slide_background_image = "img/portugal-wildfire.jpg"
@@ -220,6 +227,8 @@ ggplot(wildfire, aes(x = factor(month), y = log_burn)) +
 
 class: center, middle
 
+## Do high-risk days actually burn more area?
+
 ```{r fwi-high-low, echo = F, eval = T}
 wildfire <- wildfire %>%
   mutate(
@@ -241,6 +250,8 @@ ggplot(wildfire, aes(x = fwi_group, y = log_burn)) +
 ---
 
 class: center, middle
+
+## Does more available fuel equal larger fires?
 
 ```{r bui-high-low, echo = F, eval = T}
 wildfire <- wildfire %>%
