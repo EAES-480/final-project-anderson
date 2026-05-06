@@ -1,0 +1,297 @@
+---
+title: "Final Project"
+author: "Student: Daytonna Anderson"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    df_print: paged
+---
+
+```{r load-packages, message = FALSE, include = FALSE}
+library(tidyverse)
+library(janitor)
+library(broom)
+library(DATAstudio)
+```
+
+```{r load-data, include=FALSE}
+wildfire <- read_csv("data/wildfire.csv")
+```
+
+
+## 1. Data
+
+```{r glimpse-data, eval = T}
+data("wildfire")
+
+wildfire <- wildfire %>%
+  clean_names()
+
+glimpse(wildfire)
+```
+
+| Column | Meaning |
+|---|---|
+| Burnt Area (`burnt_area`) | Daily burnt area in hectares |
+| Fire Weather Index (`fwi`) | Numeric rating of fire intensity |
+| Buildup Index (`bui`) | Numeric rating of fuel available for combustion |
+| Initial Spread Index (`isi`) | Numeric rating of expected rate of fire spread |
+| Fine Fuel Moisture Code (`ffmc`) | Numeric rating of moisture content of litter and other fuels |
+| Daily Severity Rating (`dsr`) | Numeric rating of difficulty to control fires |
+| Duff Moisture Code (`dmc`) | Numeric rating of average moisture content of lose compact organic layers |
+| Drought Code (`dc`) | Rating of average moisture content of compact organic layers |
+|`day`, `month`, `year` | Time stamp for each point |
+
+
+
+## 2. Questions and Variables
+
+#### Main Question
+
+How do environmental conditions influence the daily total burned area at the national scale?
+
+
+
+#### Variables
+
+Response Variable: `burnt_area`
+Predictor Variable(s): `fwi`, `isi`, `bui`, `dc`
+
+
+
+#### Comparison Groups
+
+- High vs. low fire risk days (`fwi`)
+- High vs. low fuel availability (`bui`)
+- Seasonal comparisons using `month`
+
+
+
+#### Hypothesis
+
+Hypothesized results:
+
+- $H_0$: Burnt area has no significant relationship with FWI, ISI, BUI, and DC
+
+- $H_A$: Burnt area has a significant relationship with at least one of FWI, ISI, BUI, and DC
+
+
+
+## 3. Initial Data Exploration
+
+
+```{r summary-data, eval = T}
+wildfire %>%
+  summarize(
+    total_days = n(),
+    zero_burn_days = sum(burnt_area == 0, na.rm = TRUE),
+   nonzero_burn_days = sum(burnt_area > 0, na.rm = TRUE)
+  )
+```
+
+
+Here I summarize the data into two categories: days with fire and days without fire (1 or 0). With the amount of zeros, this justifies the need for transformation in the data to make it work with normal tests.
+
+
+
+```{r burnt-distribution, echo = F, eval = T}
+#| warning: false
+ggplot(wildfire, aes(x = burnt_area)) +
+  geom_histogram(bins = 25) +
+  scale_y_log10() +
+  labs(
+    title = "Daily Burned Area",
+    x = "Burned Area (hectares per day)",
+    y = "Count (log)"
+  )
+```
+
+
+```{r log-data, eval = T}
+wildfire <- wildfire %>%
+  mutate(log_burn = log10(burnt_area +1))
+```
+
+
+This original plot is highly right-skewed (positively skewed), meaning I cannot use normal testing and explains the need to transform the data from the few extreme fire days within the dataset. I used log scaling to center the data more, since it handles the zeros which ends up reducing the skewed aspect. 
+
+
+
+```{r burnt-vs-fwi, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = fwi, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Fire Weather Index (FWI)",
+    y = "Burned Area (log)"
+  )
+```
+
+
+```{r burnt-vs-isi, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = isi, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Initial Spread Index (ISI)",
+    y = "Burned Area (log)"
+  )
+```
+
+
+```{r burnt-vs-bui, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = bui, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Buildup Index (BUI)",
+    y = "Burned Area (log)"
+  )
+```
+
+
+```{r burnt-vs-dc, echo = F, eval = T, message = F}
+ggplot(wildfire, aes(x = dc, y = log_burn)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(
+    title = "Burned Area vs Fire Weather Index",
+    x = "Drought Code (DC)",
+    y = "Burned Area (log)"
+  )
+```
+
+
+We can now see a clear positive trend with the response variable and each predictor variables, which supports regression modeling. Meaning that when the predictor variable increases, so does the response variable. 
+
+
+
+## 4. Exploratory Variable Testing
+
+
+```{r seasonal-fires, echo = F, eval = T}
+ggplot(wildfire, aes(x = factor(month), y = log_burn)) +
+  geom_boxplot() +
+  labs(
+    title = "Seasonal Variation in Burned Area",
+    x = "Month",
+    y = "Burned Area (log)"
+  )
+```
+
+
+We see variability through the months, with a peak wildfire count in august and the months leading up to and following it. This suggests that summertime in Portugal harbors the influencial conditions for wildfires. 
+
+
+
+
+```{r fwi-high-low, eval = T}
+wildfire <- wildfire %>%
+  mutate(
+    fwi_group = if_else(fwi > median(fwi, na.rm = TRUE),
+                        "High FWI", "Low FWI")
+  )
+```
+
+
+```{r fwi-high-low-plot, echo = F, eval = T}
+ggplot(wildfire, aes(x = fwi_group, y = log_burn)) +
+  geom_boxplot() +
+  labs(
+    title = "Burned Area by Fire Weather Risk Level",
+    x = "FWI Group",
+    y = "Log Burned Area"
+  )
+```
+
+We see a significant difference between High `fwi` and low `fwi`, with higher rates increasing the area burned. 
+
+
+
+```{r bui-high-low, eval = T}
+wildfire <- wildfire %>%
+  mutate(
+    bui_group = if_else(bui > median(bui, na.rm = TRUE),
+                        "High BUI", "Low BUI")
+  )
+```
+
+
+```{r bui-high-low-plot, echo = F, eval = T}
+ggplot(wildfire, aes(x = bui_group, y = log_burn)) +
+  geom_boxplot() +
+  labs(
+    title = "Burned Area by Fuel Availability",
+    x = "BUI Group",
+    y = "Log Burned Area"
+  )
+```
+
+
+Similar to `fwi`, `bui` follows the same trend with high rates increasing the area burned. Meaning, that area burned is influenced by the amount of fuel available. 
+
+
+
+## 5. Statistical Testing
+
+```{r mean-CI, echo = F, eval = T}
+t.test(wildfire$burnt_area)
+```
+
+
+It can be seen that the mean is significantly greater than 0, which confirms that wildfire activity is non-random and is supported by the predictors variables.
+
+95% CI does NOT include 0, meaning the wildfire acitvity is statiscally meaningful and has a strong relationship with the predictor variables chosen. 
+
+
+
+```{r lm-model, echo = F, eval = T}
+model <- lm(log10(burnt_area +1) ~ fwi + isi + bui + dc, data = wildfire)
+
+summary(model)
+```
+
+
+This model explores the combined effects of each environmental response variable. The R-squared value of 0.72 explains that 72% of the wildfire variability is explained by environmental conditions. 
+
+The 2.2e-16 p-value means we reject our null hypothesis, which explains that burnt area has a significant relationship with at least one of fwi, isi, bui, and dc. 
+
+
+
+```{r plotted-residuals, echo = F, eval = T}
+par(mfrow = c(2,2))
+plot(model)
+```
+
+With the residual models:
+
+- Residuals vs Fitted is scattered around 0, which tells us that the model is appropriate and linear.
+
+- Q-Q Residuals follows a straight line, indicating that the residuals follow a normal distribution.
+
+-  location has a random spread spread of points, which indicates constant variance (homoscedasticity).
+
+- Residuals vs Leverage has a view points that outlay Cook's distance lines, which means they are highly influential that have the opportunity to disproportionately affect the regression results. 
+
+
+```{r residul-model, eval = T}
+wildfire <- wildfire %>%
+  mutate(residuals = resid(model),
+         fitted = fitted(model))
+```
+
+
+```{r plotting-own-residual, echo = F, eval = T}
+ggplot(wildfire, aes(x = fitted, y = residuals)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuals vs Fitted Values")
+```
+
+Making my own residuals model proves that fatalistically the residuals models are reliable and are valid. 
+
