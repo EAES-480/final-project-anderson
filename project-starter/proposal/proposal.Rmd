@@ -20,7 +20,8 @@ The dataset also includes predictor variables that influence and describe fire w
 Fire Weather Index (`fwi`), 
 Buildup Index (`bui`), 
 Initial Spread Index (`isi`), 
-Fine Fuel Moisture Code (`ffmc`), 
+Fine Fuel Moisture Code (`ffmc`),
+Daily Severity Rating (`dsr`),
 Duff Moisture Code (`dmc`), 
 Drought Code (`dc`), 
 and `day`, `month`, `year`. 
