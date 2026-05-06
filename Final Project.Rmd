@@ -40,7 +40,7 @@ glimpse(wildfire)
 | Initial Spread Index (`isi`) | Numeric rating of expected rate of fire spread |
 | Fine Fuel Moisture Code (`ffmc`) | Numeric rating of moisture content of litter and other fuels |
 | Daily Severity Rating (`dsr`) | Numeric rating of difficulty to control fires |
-| Duff Moisture Code (`dmc`) | Numeric rating of average moisture content of lose compact organic layers |
+| Duff Moisture Code (`dmc`) | Numeric rating of average moisture content of loose compact organic layers |
 | Drought Code (`dc`) | Rating of average moisture content of compact organic layers |
 |`day`, `month`, `year` | Time stamp for each point |
 
