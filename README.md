@@ -1,152 +1,77 @@
 
-# Final Project Overview
+# Introduction + Question
 
-Choose a dataset and:  
+The data used in this analysis comes from the [`wildfire` dataset](https://r-packages.io/datasets/wildfire) included in the `DATAstudio` package in R. This dataset compiles records of wildfire events in Portugal, showing the amount of area burned (in hectares) for wildfires in Portugal, and then accompanied by Canadian Forest Fire Weather Index System Indices (CFFWIS). This data was originally collected from the monitoring systems and environmental observation networks. The goal for this project is to investigate how environmental factors influence wildfire behavior, specifically focusing on burned area. 
 
-  * apply data science to explore and wrangle
-  * pose 2-3 good questions based on your data exploration
-  * answer the questions using methods from EAES 480
-  * summarize your data, method, and results in README.md and a 5-min presentation.
+Each row in this dataset represents a day. The dataset includes a primary response variable, `burnt_area`, which represents the total area burned per day. Since this data is taken on a national level, the analysis focuses on large-scale environmental influences on wildfire activity, rather than individual fire events.  
 
-## Datasets
-  
-**Undergrads**  
-Daytonna: Help search on 4/8.  
-Eli: Help search on 4/8.  
-Dylan J.: Has data already.  
-Rachel: Help search on 4/8.  
-AnaBelle: NA  
-Indigo: NA  
-Samarth: NA  
-Arianna: Discuss with Gavin.  
-  
-**Grads**  
-Aaron: Has data already.  
-Amelia: [Forest Inventory Analysis Data for Southeast Alaska](https://github.com/McNicol-Lab/Yellow-cedar-data-compilation)  
-Dylan E.: Discuss with Gavin.  
-Louis: NA  
-Santiago: Discuss with Gavin.  
-Wen: [Coastal temperate rainforest soil carbon](https://datadryad.org/dataset/doi:10.5061/dryad.5jf6j1r) [use 2024 version]  
+The dataset also includes predictor variables that influence and describe fire weather and fuel conditions:
 
-## Good Data Sources
+| Column | Meaning |
+|---|---|
+| Burnt Area (`burnt_area`) | Daily burnt area in hectares |
+| Fire Weather Index (`fwi`) | Numeric rating of fire intensity |
+| Buildup Index (`bui`) | Numeric rating of fuel available for combustion |
+| Initial Spread Index (`isi`) | Numeric rating of expected rate of fire spread |
+| Fine Fuel Moisture Code (`ffmc`) | Numeric rating of moisture content of litter and other fuels |
+| Daily Severity Rating (`dsr`) | Numeric rating of difficulty to control fires |
+| Duff Moisture Code (`dmc`) | Numeric rating of average moisture content of loose compact organic layers |
+| Drought Code (`dc`) | Rating of average moisture content of compact organic layers |
+|`day`, `month`, `year` | Time stamp for each point |
 
-### 1. Our World in Data (OWID) – Climate, Emissions, Energy, and Environmental Indicators  
+I investigated the influence chosen predictor variables had on the response variable, and developed the research questions: How do environmental conditions influence the daily total burned area at the national scale?
 
-Link: [www.ourworldindata.org](www.ourworldindata.org) (explore via charts or the CO₂ & Greenhouse Gas Emissions explorer and similar pages for temperature, land use, etc.)  
-  
-What you get: Clean, country-year (or global) tabular CSVs with long time series (often 1800s–present) on CO₂/GHG emissions (by fuel, per capita, consumption-based), surface temperature anomalies, energy mix, land-use change, biodiversity indicators, and more. Multiple related variables in one dataset for multivariate analysis.
 
-### 2. USGS Earthquake Catalog
 
-Link: [www.earthquake.usgs.gov/earthquakes/search](www.earthquake.usgs.gov/earthquakes/search) (or the real-time feeds at earthquake.usgs.gov/earthquakes/feed/v1.0/csv.php for starters)  
-  
-What you get: Tabular CSV with columns for time, latitude/longitude, depth, magnitude, location name, type (earthquake vs. explosion), and more. Queryable for global or regional events over any time period (e.g., all M4+ worldwide since 1900).
+# Methods
 
-### 3. Climate TRACE Global Emissions Inventory
+For my analysis, I chose one response variable (`burnt_area`)  and four predictor variables ( `fwi`, `isi`, `bui`, `dc`). Once I cleaned up my data and filtered out incorrect column identification (capital variables) and NA points, I divided the data into two categories: days with fire and days without fire (1 or 0). Given the number of zeros, this justifies transforming the data to make it work with normal tests. I started with some initial plots to see how the data works with modeling. The initial plot was extremely right-skewed (positively skewed), meaning I couldn’t simply use normal testing in its original form, which explains the need to transform the data from the few extreme fire days within the dataset. 
 
-Link: [www.climatetrace.org/data](www.climatetrace.org/data) (downloads section)  
-  
-What you get: ZIP packages of multiple CSVs with country-level or sector-level greenhouse gas emissions (CO₂e by gas, subsector, source) from 2015–2025 (including monthly and projected data). Covers power, manufacturing, fossil fuels, agriculture, waste, etc., with confidence intervals
-  
-## Deliverables
+I used log scaling to better center the data, since it handles zeros and mitigates skew. Once I log-scaled the dataset, I created simple line regression plots to determine the relationship between each of the predictor variables and the response variable to see clear positive trends (a more linear relationship), which supports regression modeling. Meaning that when the predictor variable increases, so does the response variable. From exploratory data analysis, I moved on to some exploratory plots with some of the predictor variables, which answered some comparison group inquiries:
 
-1.  Proposal - due Wed. April 15, at midnight. (complete proposal.Rmd in your fork)
-2.  Executive summary - due Sunday, May 3, at midnight. (completed README.md in your fork)
-3.  Presentation - due Wed. May 6, 1-3pm (recording or live via Zoom)
+Comparison Groups: High vs. low fire risk days (`fwi`)
+High vs. low fuel availability (`bui`)
+Seasonal comparisons ( `month`)
 
-### Proposal
+After answering the initial questions, I moved onto statiscal testing to make the plot results more reliable and initiate some hypothesis testing:
 
-This is a draft of the introduction section of your project as well as a data analysis plan and your dataset.
+$H_0$: Burnt area has no significant relationship with FWI, ISI, BUI, and DC
+$H_A$: Burnt area has a significant relationship with at least one of FWI, ISI, BUI, and DC
 
--   **Section 1 - Introduction:** The introduction should introduce your general
+I performed a t-test and summarized a model of all variables to extract the p-value, mean, confidence interval (CI), and R-squared (R2) value. Finally, to validate the earlier regression modeling, I created a four-plot residual vs. fitted values model to accurately assess the reliability of the data. Additionally, I created my own residual plot to test the four-plot model's accuracy. 
 
-    research question and your data (where it came from, how it was collected,
 
-    what are the cases, what are the variables, etc.).
+# Results
 
--   **Section 2 - Data:** Place your data in the \`/data\` folder, and add dimensions and codebook to the README in that folder.
-    Then print out the output of and codebook to the README in that folder.
-    Then print out the output of `glimpse()` or `skim()` of your data frame.
+Wildfire activity varied across environmental conditions. We see variability through the months, with a peak wildfire count in August and the months leading up to and following it. This suggests that summertime in Portugal harbors the influential conditions for wildfires. Comparisons between grouped variables further support this pattern. Days classified as high fire risk based on `fwi` had significantly higher rates of area burned. We can see a similar trend with `bui`, with high rates increasing the area burned; the area burned is influenced by the amount of fuel available. 
 
--   **Section 3 - Data analysis plan:**
+The statistical testing done reinforces these trends. It can be seen that the mean is significantly greater than 0, which confirms that wildfire activity is non-random and is supported by the predictor variables. The 95% CI does NOT include 0, meaning the wildfire activity is statistically meaningful and has a strong relationship with the predictor variables chosen. The combined model explores the overall effects of each environmental response variable. The R-squared value of 0.72 explains that 72% of the wildfire variability is explained by environmental conditions. This, however, does mean that the model leaves 28% unexplained. The 2.2e-16 p-value means we reject our null hypothesis, which explains that burnt area has a significant relationship with at least one of fwi, isi, bui, and dc.
 
-    -   The outcome (response, Y) and predictor (explanatory, X) variables you will use to answer your question.
 
-    -   The comparison groups you will use, if applicable.
 
-    -   Very preliminary exploratory data analysis, including some summary statistics and visualizations, along with some explanation on how they help you learn more about your data.
-        (You can add to these later as you work on your project.)
+The residual modeling suggests that the linear regression classification is accurate and reliable:
 
-    -   The method(s) that you believe will be useful in answering your question(s).
-        (You can update these later as you work on your project.)
+Residuals vs Fitted is scattered around 0, which tells us that the model is appropriate and linear.
+Q-Q Residuals follow a straight line, indicating that the residuals follow a normal distribution.
+Scale-Location has a random spread of points, which indicates constant variance (homoscedasticity).
+Residuals vs Leverage has a few points that outlay Cook's distance lines, which means they are highly influential and have the opportunity to disproportionately affect the regression results. 
 
-    -   What results from these specific statistical methods are needed to support your hypothesized answer?
+My own residual plot agrees with the other modeled residual plot, proving accuracy and consistent results. 
 
-Each section should be no more than 1 page (excluding figures).
-You can check a print preview to confirm length.
 
-The grading scheme for the project proposal is as follows.
-Note that after you receive feedback for your proposal you can improve it based on the feedback and re-submit it.
-If you re-submit, your final score for the proposal will be the average of two scores you receive (first and second submission).
+# Interpretation + Limitations
 
-| Total                                | 20 pts |
-|--------------------------------------|--------|
-| Data description                     | 8 pts  |
-| Proposal                             | 10 pts |
-| Workflow, organization, code quality | 2 pt   |
+These results indicate that environmental conditions play a significant role in determining wildfire severity at the national scale in Portugal. The inclusion of `fwi` and `bui` shows a particular influence, showcasing the importance of atmospheric and ecological factors in wildfire analysis. 
 
-### Executive summary
+One limitation within this dataset was the lack of temperature values to accompany the scaled values given by each variable. Although the dataset was still interpretable with the available scaled variables, the lack of actual temperature (and wind speed)  that goes with each of these data points is not included. I think the inclusion of temperature and perhaps wind speed would have made the data more digestible and improved the accuracy of the modeling. 
 
-Along with your presentation slides, we want you to provide a brief summary of your project in the README of your repository.
+I believe the high number of zero-burn days also provided a challenge. While the log transformation mitigated skewness and allowed for regression modeling, it didn’t fully address the zero issue. This makes the model better at explaining the magnitude of fires rather than predicting whether a fire will occur. 
 
-This executive summary should provide information on the dataset you're using, your research question(s), your methodology, and your findings.
 
-The executive summary is worth 30 points and will be evaluated based on whether it follows guidance and whether it's concise but detailed enough.
+# Conclusion
 
-### Presentation
+Wildfires have conditions in which they happen, but they also have various variables that influence the amount of area they burn. There is clear evidence that supports the influence of each variable tested on the area burned. With the increasing of each predictor variable, we see a strong correlation with the response variable; as each predictor variable increases, so does the response variable. This can be proved through log-transformed regression plotting, residual modeling, and t-testing. Though many days did not experience fires, those that did showed a direct, strong relationship with `fwi`, `isi`, `bui`, and `dc`.
 
-5 minutes max.
-You can either present live during your workshop or pre-record and submit your video to be played during the workshop.
-
-Prepare a slide deck using the template in your repo.
-This template uses a package called `xaringan`, and allows you to make presentation slides using R Markdown syntax.
-There isn't a limit to how many slides you can use, just a time limit (5 minutes total).
-Your presentation should not just be an account of everything you tried ("then we did this, then we did this, etc."), instead it should convey what choices you made, and why, and what you found.
-
-Before you finalize your presentation, make sure your chunks are turned off with `echo = FALSE`.
-
-Presentations will take place during the last workshop of the semester.
-You can choose to do your presentation live or pre-record it.
-During your workshop you will watch presentations from other teams in your workshop and provide feedback in the form of peer evaluations.
-The presentation line-up will be generated randomly.
-
-The grading scheme for the presentation is as follows:
-
-| Total                                                                                                                                                                                                       | 50 pts |
-|--------------------------------------------------------|---------|
-| Content: Quality of question and match with data       | 10 pts  |
-| Methods: Did you use and describe stats accurately?    | 10 pts  |
-| Creativity: Did you draw on domain knowledge?          | 10 pts  |
-| Time management: Did you use the time well?            | 5 pts   |
-| Professionalism: How well did you communciate?         | 5 pts   |
-| Organization: Did you tell at a story?                 | 5 pts   |
-| Slides: Was use of visuals effective and clear?        | 5 pts   |
-
-### Repo organization
-
-The following folders and files in your project repository:
-
--   `presentation.Rmd` + `presentation.html`: Your presentation slides
--   `README.Rmd` + `README.md`: Your write-up
--   `/data`: Your dataset in CSV or RDS format and your data dictionary
--   `/proposal`: Your project proposal
-
-Style and format does count for this assignment, so please take the time to make sure everything looks good and your data and code are properly formatted.
-
-## Marking
-
-| Total                            | 100 pts |
-|----------------------------------|---------|
 | Proposal                         | 20 pts  |
 | Presentation                     | 50 pts  |
 | Executive summary                | 30 pts  |
