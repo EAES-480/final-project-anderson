@@ -71,3 +71,7 @@ I believe the high number of zero-burn days also provided a challenge. While the
 # Conclusion
 
 Wildfires have conditions in which they happen, but they also have various variables that influence the amount of area they burn. There is clear evidence that supports the influence of each variable tested on the area burned. With the increasing of each predictor variable, we see a strong correlation with the response variable; as each predictor variable increases, so does the response variable. This can be proved through log-transformed regression plotting, residual modeling, and t-testing. Though many days did not experience fires, those that did showed a direct, strong relationship with `fwi`, `isi`, `bui`, and `dc`.
+
+# References
+
+Lee, M. W., de Carvalho, M., Paulin, D., Pereira, S., Trigo, R., and da Camara, C. (2026). BLAST: A Bayesian lasso tail index regression model with an application to extreme wildfires. Submitted.
